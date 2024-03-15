@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# This script attaches to every published USB devices on the remote host.
+
+usbip_host='usbip_server_host_name'
+SPOOL=/var/spool/usbip/attach
+mkdir -p "$(dirname $SPOOL)"
+
+function usbip_list_remote {
+# Bug: The --parsable option doesn't work
+	/usr/sbin/usbip list -r "${usbip_host}" | grep '/devices/' | rev | cut -d/ -f1 | rev
+}
+
+function usbip_list_local {
+# Bug: The --parsable option doesn't work
+	/usr/sbin/usbip port | grep '^Port' | cut -d: -f1 | cut -d' ' -f2
+}
+
+if [[ $1 == "-q" ]]
+then
+	exec &>/dev/null
+fi
+
+touch $SPOOL
+
+while [[ -e $SPOOL ]]
+do
+	while read -r busid
+	do
+		/usr/sbin/usbip attach -r "${usbip_host}" -b "${busid}"
+	done < <(usbip_list_remote)
+	sleep 10
+done
+
+while read -r port
+do
+	/usr/sbin/usbip detach -p "${port}"
+done < <(usbip_list_local)
+
+exit 0

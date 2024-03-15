@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# This script binds to every USB devices on the local host.
+
+SPOOL=/var/spool/usbip/bind
+mkdir -p "$(dirname $SPOOL)"
+
+function usbip_list_local {
+	/usr/sbin/usbip list -p -l | cut -d# -f1 | cut -d= -f2
+}
+
+if [[ $1 == "-q" ]]
+then
+	exec &>/dev/null
+fi
+
+touch $SPOOL
+
+# Keep binding USB devices until we need to stop
+while [[ -e $SPOOL ]]
+do
+	while read -r busid
+	do
+		/usr/sbin/usbip bind -b "${busid}"
+	done < <(usbip_list_local)
+	sleep 10
+done
+
+# Unbind all the USB devices
+while read -r busid
+do
+	/usr/sbin/usbip unbind -b "${busid}"
+done < <(usbip_list_local)
+
+exit 0

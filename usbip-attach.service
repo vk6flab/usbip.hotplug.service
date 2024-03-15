@@ -1,0 +1,12 @@
+[Unit]
+Description=USB-IP Client Attach
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStartPre=modprobe vhci_hcd
+ExecStart=/opt/usbip/usbip-attach -q
+ExecStop=/bin/rm -f /var/spool/usbip/attach  ;  /bin/bash -c "while [[ -d /proc/"$MAINPID" ]]; do sleep 1; done"
+
+[Install]
+WantedBy=multi-user.target

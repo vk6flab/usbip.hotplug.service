@@ -1,0 +1,10 @@
+[Unit]
+Description=USB-IP Server Bindings
+
+[Service]
+ExecStartPre=modprobe usbip-host ; /usr/sbin/usbipd -D
+ExecStart=/opt/usbip/usbip-bind -q
+ExecStop=/bin/rm -f /var/spool/usbip/bind  ; /bin/bash -c "while [[ -d /proc/"$MAINPID" ]]; do sleep 1; done"
+
+[Install]
+WantedBy=multi-user.target
